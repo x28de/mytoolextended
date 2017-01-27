@@ -15,15 +15,11 @@ import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.TreeMap;
 
-import javax.swing.JButton;
 import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTree;
 import javax.swing.event.TreeSelectionEvent;
@@ -35,11 +31,8 @@ import javax.swing.tree.TreeSelectionModel;
 
 import edu.uci.ics.jung.algorithms.importance.BetweennessCentrality;
 import edu.uci.ics.jung.algorithms.importance.Ranking;
-import edu.uci.ics.jung.algorithms.layout.ISOMLayout;
-import edu.uci.ics.jung.algorithms.layout.KKLayout;
 import edu.uci.ics.jung.algorithms.layout.PolarPoint;
 import edu.uci.ics.jung.algorithms.layout.RadialTreeLayout;
-import edu.uci.ics.jung.algorithms.layout.TreeLayout;
 import edu.uci.ics.jung.graph.DelegateForest;
 import edu.uci.ics.jung.graph.DirectedSparseGraph;
 import edu.uci.ics.jung.graph.UndirectedSparseGraph;
@@ -59,7 +52,6 @@ public class CentralityColoring implements TreeSelectionListener {
 	
 	private WindowAdapter myWindowAdapter = new WindowAdapter() {
 		public void windowClosing(WindowEvent e) {
-			System.out.println("CC tmp: JTree closed");
 		}
 	};
 	Hashtable<Integer,Integer> parents = new Hashtable<Integer,Integer>();
@@ -104,7 +96,6 @@ public class CentralityColoring implements TreeSelectionListener {
 			int nodeID = node.getID();
 			g.addVertex(nodeID);
 			g2.addVertex(nodeID);
-			System.out.println("NodeID " + nodeID + " " + node.getLabel());
 		}
 		
 //		
@@ -129,7 +120,6 @@ public class CentralityColoring implements TreeSelectionListener {
 				uniqID = n2 + "-" + n1;
 			}
 			if (uniqEdges.contains(uniqID)) {
-				System.out.println("CC: Duplicate skipped " + uniqID);
 				continue;
 			} else {
 				uniqEdges.add(uniqID);
@@ -174,13 +164,11 @@ public class CentralityColoring implements TreeSelectionListener {
 //			Vertex vIt = ((NodeRanking) currentRanking).vertex;
 			@SuppressWarnings("unchecked")
 			int vIt = ((Ranking<Integer>) currentRanking).getRanked();	//	vertex of iterator
-			System.out.println(rIt + " -> " + vIt);
 
 //			int nodeID = verticeIDs.get(vIt);
 			int nodeID = vIt;
 			nodesSorted[rankpos] = nodeID;
 			scoresSorted[rankpos] = currentRanking.rankScore;
-			System.out.println(rankpos + " " + scoresSorted[rankpos] + " (" + nodes.get(nodesSorted[rankpos]).getLabel() + ")");
 			ranksSorted[nodeID] = rankpos;
 			rankedNodes.put(rankpos, nodeID);		//	TODO replace old arrays
 			if (currentRanking.rankScore > 0) nonLeaves++;
@@ -268,9 +256,7 @@ public class CentralityColoring implements TreeSelectionListener {
 			
 			while (eligible.size() > 0) {
 				int currentParentRank = todoSet.first();
-				System.out.println("currentParentRank " + currentParentRank);
 				int nodeID = rankedNodes.get(currentParentRank);
-				System.out.println(nodes.get(nodeID).getLabel());
 
 				GraphNode node = nodes.get(nodeID);
 				Enumeration<GraphEdge> neighbors = node.getEdges();
@@ -296,7 +282,6 @@ public class CentralityColoring implements TreeSelectionListener {
 						uniqID = rel + "-" + nodeID;
 					}
 					if (uniqEdges.contains(uniqID)) {
-						System.out.println("CC: Duplicate skipped (2) " + parentUniq);
 						continue;
 					}
 
@@ -311,8 +296,6 @@ public class CentralityColoring implements TreeSelectionListener {
 
 					g2.addEdge(treeEdgeID, nodeID, otherEnd, EdgeType.DIRECTED);
 					parents.put(otherEnd, nodeID);
-					System.out.println(nodes.get(nodeID).getLabel() + " => " + 
-							nodes.get(otherEnd).getLabel());
 					nonTreeEdges.remove(edge);
 					done.add(otherEnd);
 					uniqEdges.add(parentUniq);
@@ -404,14 +387,12 @@ public class CentralityColoring implements TreeSelectionListener {
 //			double y = layout.getY(id);
 			
 			//	For Trees
-//			System.out.println(id + " " + nodes.get(id).getLabel());
 			Point2D p = PolarPoint.polarToCartesian(map.get(id));
 			double x = p.getX();
 			double y = p.getY();
 			
 			int ix = (int) x;
 			int iy = (int) y;
-//			System.out.println("more: " + id + ", " + ix + " " + iy);
 			GraphNode node = nodes.get(id);
 			node.setXY(new Point(ix, iy));
 			nodes.put(id, node);
@@ -477,30 +458,10 @@ public class CentralityColoring implements TreeSelectionListener {
         	}
         }
     }
-//    private class BranchInfo {
-//        public Integer branchKey;
-//        public String branchLabel;
-// 
-//        public BranchInfo(int branchKey, String branchLabel) {
-//        	this.branchKey = branchKey;
-//        	this.branchLabel = branchLabel;
-//            
-//            if (branchLabel == null) {
-//                System.err.println("Error CC140 Couldn't find info for " + branchKey);
-//            }
-//        }
-//        public int getKey() {
-//            return branchKey;
-//        }
-//        
-//        public String toString() {
-//            return branchLabel;
-//        }
-//}
+
 	public void valueChanged(TreeSelectionEvent arg0) {
 		TreePath[] paths = arg0.getPaths();
 
-		System.out.println("\n");
 		for (int i = 0; i < paths.length; i++) {
 			TreePath selectedPath = paths[i];
 			Object o = selectedPath.getLastPathComponent();

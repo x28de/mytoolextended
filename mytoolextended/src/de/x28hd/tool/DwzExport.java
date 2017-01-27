@@ -216,7 +216,7 @@ public class DwzExport {
 			}
 			String tagname = "";
 			NodeList deltaItems = null;
-			System.out.println("For container " + c + " nodes, there are " + stubItems.getLength() + " stub items");
+//			System.out.println("For container " + c + " nodes, there are " + stubItems.getLength() + " stub items");
 
 			stubItems = stub.getElementsByTagName("link");
 			for (int i = 0; i < stubItems.getLength(); i++) {
@@ -224,7 +224,7 @@ public class DwzExport {
 			}
 			tagname = "";
 			deltaItems = null;
-			System.out.println("For container " + c + " links, there are " + stubItems.getLength() + " stub items");
+//			System.out.println("For container " + c + " links, there are " + stubItems.getLength() + " stub items");
 
 //			if (c == 0) {
 				tagname = "node";
@@ -233,7 +233,7 @@ public class DwzExport {
 					NodeList topicsContainer = contentDelta.getRoot().getElementsByTagName(tagname);
 					mergeContainer.appendChild(merge.adoptNode(topicsContainer.item(i).cloneNode(true)));
 				}
-				System.out.println("For container " + c + " nodes, there are " + deltaItems.getLength() + " delta items");
+//				System.out.println("For container " + c + " nodes, there are " + deltaItems.getLength() + " delta items");
 //			} else if (c == 3) {
 				tagname = "link";
 				deltaItems = statementDelta.getTree().getElementsByTagName(tagname);
@@ -241,7 +241,7 @@ public class DwzExport {
 					NodeList topicsContainer = statementDelta.getRoot().getElementsByTagName(tagname);
 					mergeContainer.appendChild(merge.adoptNode(topicsContainer.item(i).cloneNode(true)));
 				}
-				System.out.println("For container " + c + " links, there are " + deltaItems.getLength() + " delta items");
+//				System.out.println("For container " + c + " links, there are " + deltaItems.getLength() + " delta items");
 //			}
 		
 		merge.normalize();

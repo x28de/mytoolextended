@@ -69,7 +69,6 @@ public class CtvImport {
         try { 
             if (connection != null) 
                 return; 
-            System.out.println("Creating Connection to Database... " + filename); 
             connection = DriverManager.getConnection("jdbc:sqlite:" + filename, config.toProperties()); 
             if (!connection.isClosed()) 
                 System.out.println("...Connection established " + connection.toString()); 
@@ -81,7 +80,7 @@ public class CtvImport {
             public void run() { 
                 try { 
                     if (!connection.isClosed() && connection != null) { 
-                    	System.out.println("Trying to close Connection to Database");                         connection.close(); 
+                    	connection.close(); 
                         if (connection.isClosed()) 
                             System.out.println("Connection to Database closed"); 
                     } 

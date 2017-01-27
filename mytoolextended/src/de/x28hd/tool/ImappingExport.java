@@ -17,12 +17,10 @@ import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Iterator;
-import java.util.Set;
 import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.TimeZone;
 import java.util.TreeMap;
-import java.util.TreeSet;
 import java.util.UUID;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -192,7 +190,6 @@ public class ImappingExport {
 			}
 			if (testBody.equals(inboxBody)) {
 				inboxItem = testItem;
-//				System.out.println("Inbox item found: " + inboxItem);
 			}
 		}
 
@@ -274,7 +271,6 @@ public class ImappingExport {
 		DefaultTreeModel treeModel = controler.getTreeModel();
 		if (treeModel != null) {
 			nonTreeEdges = controler.getNonTreeEdges();
-			System.out.println("IE edges reducsd " + edges.size() + " -> " + nonTreeEdges.size());
 			DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode) treeModel.getRoot();
 			descendTree(treeNode, 1, CDS_INBOX2, inboxItem, "");
 		} else {
@@ -371,7 +367,7 @@ public class ImappingExport {
 			}
 			String tagname = "";
 			NodeList deltaItems = null;
-			System.out.println("For container " + c + ", there are " + stubItems.getLength() + " stub items");
+//			System.out.println("For container " + c + ", there are " + stubItems.getLength() + " stub items");
 
 			if (c == 0) {
 				tagname = itemNames[0];
@@ -380,7 +376,7 @@ public class ImappingExport {
 					NodeList topicsContainer = contentDelta.getRoot().getElementsByTagName(tagname);
 					mergeContainer.appendChild(merge.adoptNode(topicsContainer.item(i).cloneNode(true)));
 				}
-				System.out.println("For container " + c + ", there are " + deltaItems.getLength() + " delta items");
+//				System.out.println("For container " + c + ", there are " + deltaItems.getLength() + " delta items");
 			} else if (c == 3) {
 				tagname = itemNames[3];
 				deltaItems = statementDelta.getTree().getElementsByTagName(tagname);
@@ -388,7 +384,7 @@ public class ImappingExport {
 					NodeList topicsContainer = statementDelta.getRoot().getElementsByTagName(tagname);
 					mergeContainer.appendChild(merge.adoptNode(topicsContainer.item(i).cloneNode(true)));
 				}
-				System.out.println("For container " + c + ", there are " + deltaItems.getLength() + " delta items");
+//				System.out.println("For container " + c + ", there are " + deltaItems.getLength() + " delta items");
 			}
 		}
 		
@@ -578,7 +574,6 @@ public class ImappingExport {
 		if (topicID != -1) {	//	Skip this for the top of multiple trees
 		String label = topic.getLabel();
 		label = label.replace("\r","");
-		System.out.println(indent + myNodeNumber + " " + label);
 		String detail = topic.getDetail();
 
 		String detailPlain = filterHTML(detail).trim();
