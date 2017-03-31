@@ -46,7 +46,15 @@ public class CentralityColoring implements TreeSelectionListener {
 	HashSet<GraphEdge> nonTreeEdges = new HashSet<GraphEdge>();
 	
 	boolean layout = false;
+	String[] colors = {
+			"#ff0000",
+			"#ffaa00",
+			"#ffff00",
+			"#00ff00",
+			"#0000ff",
+			"#b200b2"};
 	JTree tree;
+	int level = -1;
 	JFrame frame;
 	GraphPanelControler controler;
 	
@@ -310,12 +318,16 @@ public class CentralityColoring implements TreeSelectionListener {
 		// Trees
 		DelegateForest<Integer,Integer> forest = new DelegateForest<Integer,Integer>(g2);
 //		TreeLayout<Integer,Integer> layout = new TreeLayout<Integer,Integer>(forest);
+//		BalloonLayout<Integer,Integer> layout = new BalloonLayout<Integer,Integer>(forest);
 		RadialTreeLayout<Integer,Integer> layout = new RadialTreeLayout<Integer,Integer>(forest);
 
 		// Or Networks
 //		KKLayout<Integer,Integer> layout = new KKLayout<Integer,Integer>(forest);
+//		FRLayout<Integer,Integer> layout = new FRLayout<Integer,Integer>(forest);
 //		ISOMLayout<Integer,Integer> layout = new ISOMLayout<Integer,Integer>(forest);
 
+//		layout.setRepulsionMultiplier(0.1);
+//		layout.setMaxIterations(4000);
 		layout.initialize();
 		int size = g2.getVertexCount();
 		layout.setSize(new Dimension(400 + (200 * ((int) Math.sqrt(size))), 
@@ -388,6 +400,7 @@ public class CentralityColoring implements TreeSelectionListener {
 			
 			//	For Trees
 			Point2D p = PolarPoint.polarToCartesian(map.get(id));
+//			Point2D p = layout.transform(id);
 			double x = p.getX();
 			double y = p.getY();
 			
@@ -431,6 +444,7 @@ public class CentralityColoring implements TreeSelectionListener {
         int parentKey = categoryInfo.getKey();
         Integer childKey = -1;
         String branchLabel = "";
+        level++;
         
         Enumeration<Integer> children = parents.keys();
         
@@ -443,20 +457,45 @@ public class CentralityColoring implements TreeSelectionListener {
 		SortedSet<Integer> orderSet = (SortedSet<Integer>) orderList.keySet();
 		Iterator<Integer> ixit = orderSet.iterator(); 
         	
+		GraphNode node;
 		while (ixit.hasNext()) {
         	int childRank = ixit.next();
         	childKey = rankedNodes.get(childRank);
-        			
+       			
         	int testParent = parents.get(childKey);
         	if (testParent == parentKey) {
-        		branchLabel = nodes.get(childKey).getLabel();
+                node = nodes.get(childKey);
+        		branchLabel = node.getLabel();
     			if (branchLabel.length() > 25) branchLabel = branchLabel.substring(0, 25) + " ..."; 
                 branch = new DefaultMutableTreeNode(new BranchInfo(childKey, branchLabel));
                 top.add(branch);
-        		
+                
                 createSelectionNodes(branch);	// recursive
+                
+                String colorString = colors[level % 6];
+    			node.setColor(colorString);
+    			
+    			//	Find and color the edge
+    			Enumeration<Integer> edgeList = edges.keys();
+    			while (edgeList.hasMoreElements()) {
+    				int edgeID = edgeList.nextElement();
+    				GraphEdge edge = edges.get(edgeID);
+    				int n1 = edge.getN1();
+    				if (n1 == parentKey) {
+        				int n2 = edge.getN2();
+        				if (n2 == childKey) {
+        					edge.setColor(colorString);
+        				} else continue;
+    				} else if (n1 == childKey) {
+        				int n2 = edge.getN2();
+        				if (n2 == parentKey) {
+        					edge.setColor(colorString);
+        				} else continue;
+    				} else continue;
+    			}
         	}
         }
+		level--;
     }
 
 	public void valueChanged(TreeSelectionEvent arg0) {
