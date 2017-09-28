@@ -64,6 +64,7 @@ public class CentralityColoring implements TreeSelectionListener {
 	};
 	Hashtable<Integer,Integer> parents = new Hashtable<Integer,Integer>();
 	TreeMap<Integer,Integer> rankedNodes = new TreeMap<Integer,Integer>();
+	int ranksSorted[] = new int[5000];
 	
 	
 	public CentralityColoring(Hashtable<Integer, GraphNode> nodes, 
