@@ -43,7 +43,6 @@ public class CentralityColoring implements TreeSelectionListener {
 	Hashtable<Integer, GraphEdge> edges;	
 	Hashtable<Integer, Color> nodesSavedColors = new Hashtable<Integer, Color>();
 	Hashtable<Integer, Color> edgesSavedColors = new Hashtable<Integer, Color>();
-	HashSet<GraphEdge> nonTreeEdges = new HashSet<GraphEdge>();
 	
 	boolean layout = false;
 	String[] colors = {
@@ -65,33 +64,23 @@ public class CentralityColoring implements TreeSelectionListener {
 	Hashtable<Integer,Integer> parents = new Hashtable<Integer,Integer>();
 	TreeMap<Integer,Integer> rankedNodes = new TreeMap<Integer,Integer>();
 	int ranksSorted[] = new int[5000];	// TODO get rid of array
+	//	For Networks
+	UndirectedSparseGraph<Integer, Integer> g = new UndirectedSparseGraph<Integer,Integer>();
+	//	For Trees
+	DirectedSparseGraph<Integer, Integer> g2 = new DirectedSparseGraph<Integer,Integer>();
+
+	Hashtable<Integer, GraphEdge> neighborIDs = new Hashtable<Integer, GraphEdge>();
 	
 	
 	public CentralityColoring(Hashtable<Integer, GraphNode> nodes, 
 			Hashtable<Integer, GraphEdge> edges) {
 		this.nodes = nodes;
 		this.edges = edges;
-	}
-
-	public void changeColors(boolean andLayout, GraphPanelControler controler) {
-		layout = andLayout;
-		this.controler = controler;
-		changeColors();
-	}
-
-	public void changeColors() {
-		//	For Networks
-		UndirectedSparseGraph<Integer, Integer> g = new UndirectedSparseGraph<Integer,Integer>();
-		//	For Trees
-		DirectedSparseGraph<Integer, Integer> g2 = new DirectedSparseGraph<Integer,Integer>();
-
-		Hashtable<Integer, GraphEdge> neighborIDs = new Hashtable<Integer, GraphEdge>();
 
 //
-//		Read GraphNode's and GraphEdge's from Hashtables nodes and edges 
+//		Read GraphNode's from Hashtable nodes 
 		
 		Enumeration<GraphNode> nodesEnum = nodes.elements();
-		Enumeration<GraphEdge> edgesEnum = edges.elements();
 		
 //
 //		Write vertices into the Graph
@@ -103,11 +92,22 @@ public class CentralityColoring implements TreeSelectionListener {
 			if (!layout) node.setColor("#c0c0c0");
 			int nodeID = node.getID();
 			g.addVertex(nodeID);
-			g2.addVertex(nodeID);
 		}
+	}
+
+	public void changeColors(boolean andLayout, GraphPanelControler controler) {
+		layout = andLayout;
+		this.controler = controler;
+		changeColors();
+	}
+
+	public void changeColors() {
+		HashSet<GraphEdge> nonTreeEdges = new HashSet<GraphEdge>();
 		
 //		
 //		Write Edges into the Graph		
+		
+		Enumeration<GraphEdge> edgesEnum = edges.elements();
 		
 		int edgeID = 0;
 		HashSet<String> uniqEdges = new HashSet<String>();
@@ -315,12 +315,6 @@ public class CentralityColoring implements TreeSelectionListener {
 			done.add(centerCandidate);
 		}
 		
-		// Trees
-		DelegateForest<Integer,Integer> forest = new DelegateForest<Integer,Integer>(g2);
-//		TreeLayout<Integer,Integer> layout = new TreeLayout<Integer,Integer>(forest);
-//		BalloonLayout<Integer,Integer> layout = new BalloonLayout<Integer,Integer>(forest);
-		RadialTreeLayout<Integer,Integer> layout = new RadialTreeLayout<Integer,Integer>(forest);
-
 		// Or Networks
 //		KKLayout<Integer,Integer> layout = new KKLayout<Integer,Integer>(forest);
 //		FRLayout<Integer,Integer> layout = new FRLayout<Integer,Integer>(forest);
@@ -328,11 +322,6 @@ public class CentralityColoring implements TreeSelectionListener {
 
 //		layout.setRepulsionMultiplier(0.1);
 //		layout.setMaxIterations(4000);
-		layout.initialize();
-		int size = g2.getVertexCount();
-		layout.setSize(new Dimension(400 + (200 * ((int) Math.sqrt(size))), 
-				300 + (150 * ((int) Math.sqrt(size)))));
-
 		// For networks
 		for (int i = 0; i < 4400; i++) {
 //			layout.step();
@@ -380,10 +369,45 @@ public class CentralityColoring implements TreeSelectionListener {
 		frame.setLocation(dim.width/2 - 298, dim.height/2 - 209);		
         frame.setMinimumSize(new Dimension(596, 418));
         frame.setVisible(true);
+        
+        treeLayout(g2);
+	}
+	
+	public void treeLayout(HashSet<GraphEdge> nonTreeEdges) {
+//		this.nonTreeEdges = nonTreeEdges;
+		Enumeration<GraphEdge> edgesEnum = edges.elements();
+
+//		
+//		Write Edges into the Graph		
 		
+		int edgeID = 0;
+		while (edgesEnum.hasMoreElements()) {
+			edgeID++;
+			GraphEdge edge = edgesEnum.nextElement();	
+			if (nonTreeEdges.contains(edge)) continue;
+			int n1 = edge.getN1();
+			int n2 = edge.getN2();
+			EdgeType edgeType = EdgeType.DIRECTED; 	//	For trees
+			g2.addEdge(edgeID, n1, n2, edgeType);
+		}
+		treeLayout(g2);
+	}
+	
+	public void treeLayout(DirectedSparseGraph<Integer, Integer> g2) {    
 		Collection<Integer> nodeIDs = g2.getVertices();
 		Iterator<Integer> nodeIt = nodeIDs.iterator();
 		
+		// Trees
+		DelegateForest<Integer,Integer> forest = new DelegateForest<Integer,Integer>(g2);
+//		TreeLayout<Integer,Integer> layout = new TreeLayout<Integer,Integer>(forest);
+//		BalloonLayout<Integer,Integer> layout = new BalloonLayout<Integer,Integer>(forest);
+		RadialTreeLayout<Integer,Integer> layout = new RadialTreeLayout<Integer,Integer>(forest);
+
+		layout.initialize();
+		int size = g2.getVertexCount();
+		layout.setSize(new Dimension(400 + (200 * ((int) Math.sqrt(size))), 
+				300 + (150 * ((int) Math.sqrt(size)))));
+
 		//	For Trees
 		HashMap<Integer,PolarPoint> map = new HashMap<Integer,PolarPoint>();
 		map = (HashMap<Integer,PolarPoint>) layout.getPolarLocations();
