@@ -38,6 +38,8 @@ public class CtvImport {
     String[][] field = {{"PersonID", "CategoryID", "KeywordID", "CategoryID", "KeywordID"},
 		{"LastName", "Name", "Name", "Name", "Name", "ShortTitle", "CoreStatement"}};
     
+    String[] colors = {"#eeeeee", "#ffbbbb", "#eeeeee", "#ffbbbb", "#eeeeee", "#bbbbff", "#ffff99"};
+    
 	//	Keys for nodes and edges, incremented in addNode and addEdge
 	Hashtable<String,Integer> inputID2num = new  Hashtable<String,Integer>();
 	int j = 0;
@@ -47,6 +49,7 @@ public class CtvImport {
 	int maxVert = 10;
 	GraphPanelControler controler;
 	String filename;
+	boolean ctv6 = false;
 
 	
     public CtvImport(File file, GraphPanelControler controler){ 
@@ -56,6 +59,7 @@ public class CtvImport {
             } catch (IOException e) {
             	System.out.println("Error CVI102 " + e);
 		} 
+        if (filename.endsWith("ctv6")) ctv6 = true;
         initDBConnection(); 
         handleCitaviDB(); 
     } 
@@ -101,30 +105,33 @@ public class CtvImport {
             //	Collect multiples
             
             for (int w = 0; w < 3; w++) { 
-            	String sqlString = 
-            		"SELECT " + table[0][w] + "." + field[0][w] + 
-            		", Count(\"\") AS Ausdr1" +
-            		" FROM " + table[0][w] +
-            		" GROUP BY " + table[0][w] + "." + field[0][w] +
+            	String t = table[0][w];
+            	String f = field[0][w];
+            	String c = t + "." + f;
+           	String sqlString = 
+            		"SELECT QUOTE(" + c + 
+            		") AS QuotedID, Count(\"\") AS Ausdr1" +
+            		" FROM " + t +
+            		" GROUP BY QuotedID " +
             		" HAVING (((Count(\"\"))>1))"; 
             		// (Authors, Categories or Keywords that occur with 
             		//	multiple publications)
             	ResultSet rs = stmt.executeQuery(sqlString);
             	while (rs.next()) { 
-            		String id = rs.getString(field[0][w]); 
+            		String id = rs.getString("QuotedID"); 
             		addNode(id, w);
             	}
             	rs.close(); 
             
             	//	Add publications and connect them
-            	sqlString = "SELECT " + table[0][w] + "." + field[0][w] + ", " +
-            		table[0][w] + ".ReferenceID FROM " + table[0][w] + ";";
+            	sqlString = "SELECT QUOTE(" + c + ") as q1, QUOTE(" +
+            		t + ".ReferenceID) as q2 FROM " + t + ";";
             		//	(All Authors, Categories, Keywords of all Publications)
             	rs = stmt.executeQuery(sqlString);
             	while (rs.next()) { 
-            		String multID = rs.getString(field[0][w]); 
+            		String multID = rs.getString("q1"); 
             		if (!inputID2num.containsKey(multID)) continue;
-            		String pubID = rs.getString("ReferenceID");
+            		String pubID = rs.getString("q2");
             		if (!inputID2num.containsKey(pubID)) {
             			addNode(pubID, 5);
             		}
@@ -135,14 +142,16 @@ public class CtvImport {
             
             //	Process publications that are linked
             Statement stmt2 = connection.createStatement(); 
-            String sqlString2 = "SELECT ActiveEntityID, PassiveEntityID FROM EntityLInk;";
+            String sqlString2 = "SELECT QUOTE(ActiveEntityID) as q1, QUOTE(PassiveEntityID) as q2 FROM EntityLInk;";
+            if (ctv6) sqlString2 = "SELECT EntityLink.Indication, QUOTE(SourceID) as q1, QUOTE(TargetID) as q2 FROM EntityLInk;";
         	ResultSet rs2 = stmt2.executeQuery(sqlString2);
         	while (rs2.next()) { 
-        		String actID = rs2.getString("ActiveEntityID"); 
+        		if (ctv6 && !rs2.getString("Indication").equals("ReferenceLink")) continue; 
+        		String actID = rs2.getString("q1"); 
         		if (!inputID2num.containsKey(actID)) {
         			addNode(actID, 5);
         		}
-        		String passID = rs2.getString("PassiveEntityID"); 
+        		String passID = rs2.getString("q2"); 
         		if (!inputID2num.containsKey(passID)) {
         			addNode(passID, 5);
         		}
@@ -153,17 +162,20 @@ public class CtvImport {
             //	Process ideas that have categories or keywords
             
             for (int w = 3; w < 5; w++) { 
+            	String t = table[0][w];
+            	String f = field[0][w];
+            	String c = t + "." + f;
             	String sqlString = 
-            		"SELECT " + table[0][w] + "." + field[0][w] +
-            		", " + table[0][w] + ".KnowledgeItemID FROM " + table[0][w] + ";";
+            		"SELECT QUOTE(" + c +
+            		") as q1, QUOTE(" + t + ".KnowledgeItemID) AS q2 FROM " + t + ";";
             		//	(All Categories and Keywords of all Ideas)
             	ResultSet rs = stmt.executeQuery(sqlString);
             	while (rs.next()) { 
-            		String multID = rs.getString(field[0][w]); 
+            		String multID = rs.getString("q1"); 
             		if (!inputID2num.containsKey(multID)) {
             			addNode(multID, w);
             		}
-            		String ideaID = rs.getString("KnowledgeItemID"); 
+            		String ideaID = rs.getString("q2"); 
             		if (!inputID2num.containsKey(ideaID)) {
             			addNode(ideaID, 6);
             		}
@@ -172,16 +184,19 @@ public class CtvImport {
             	rs.close(); 
             }
             
-            //	Process ideas linking to publications, and all stand-alone ideas
-            String sqlString = "SELECT ID, CoreStatement, ReferenceID FROM KnowledgeItem";
+            //	Process genuine ideas (with a CoreStatement) linking to publications, and all stand-alone ideas 
+            String sqlString = "SELECT ID, QUOTE(ID) as q1, CoreStatement, ReferenceID, QUOTE(ReferenceID) as q2 FROM KnowledgeItem";
         	ResultSet rs = stmt.executeQuery(sqlString);
         	while (rs.next()) { 
-        		String ideaID = rs.getString("ID");
+        		String coreStmt = rs.getString("CoreStatement");
+        		if (coreStmt == null) continue;	// Don't know how else to exclude the odd items from the demo
+        		String ideaID = rs.getString("q1");
         		if (!inputID2num.containsKey(ideaID)) {
         			addNode(ideaID, 6);
         		}
-        		String pubID = rs.getString("ReferenceID");
-        		if (pubID == null) continue;
+        		String rawRefID = rs.getString("ReferenceID");
+        		if (rawRefID == null) continue;
+        		String pubID = rs.getString("q2");
         		if (!inputID2num.containsKey(pubID)) {
         			addNode(pubID, 5);
         		}
@@ -224,20 +239,31 @@ public class CtvImport {
 		try {
 			stmt = connection.createStatement();
 			int w = tables;	// which table
-			String sqlString = "SELECT " + table[1][w]+ "." + field[1][w] + more +
-        		" FROM " + table[1][w] + " WHERE (((" +
-        		table[1][w] + ".ID) = \"" + nodeRef + "\"));"; 
+        	String t = table[1][w];
+        	String f = field[1][w];
+        	String c = t + "." + f;
+			String sqlString = "SELECT " + c + more +
+	        		" FROM " + t + " WHERE (" 
+					+ t + ".ID = " + nodeRef + ");"; 
+			
+//			String sqlString = "SELECT " + t + ".ID as q, QUOTE(" + t + ".ID) as q2" + more +
+//    		" WHERE (CAST (" + t + ".ID as blob) "
+//    		+ "= CAST('" + nodeRef + "' as blob));"; 
+//			// Thanks to https://stackoverflow.com/a/42293740 -- did not always work 
+			
 			ResultSet rs = stmt.executeQuery(sqlString);
 			while (rs.next()) { 
 				try {
-					String shorty = rs.getString(field[1][w]); 
-					if (shorty == null && tables == 5) {
+					String shorty = rs.getString(f); 
+					if (tables == 5) {
 						verbal = rs.getString("Title");
-						topicName = verbal;
+						topicName = shorty;
+						if (shorty == null) topicName = verbal;
 					} else if (tables == 6) {
 						verbal = rs.getString("Text");
-						topicName = shorty;
-						if (verbal == null) verbal = shorty; 
+						if (verbal == null) verbal = "";
+						verbal = shorty + "<br/><br/>" + verbal;
+						topicName = "";
 					} else {
 						topicName = shorty;
 						verbal = shorty;
@@ -250,22 +276,21 @@ public class CtvImport {
 			System.out.println("Error CVI107 " + e);
 		} 
         
-		if (tables < 6) {
-	        newNodeColor = "#ccdddd";
-		} else if (tables == 6) {
-			newNodeColor = "#ffff99";
-		}
+		newNodeColor = colors[tables];
 		
+		if (topicName == null) topicName = "";
+		if (verbal == "null") verbal = "";
 		int len = topicName.length();
 		if (len > 39) {
 			len = 30;
+			if (!verbal.isEmpty() && !verbal.contains(topicName)) verbal = topicName + "<br/><br/>" + verbal;
 			topicName = topicName.substring(0, len);
 		} 
 
 		topicName = topicName.replace("\r"," ");
 		if (topicName.equals(newLine)) topicName = "";
 		if (verbal == null || verbal.equals(newLine)) verbal = "";
-		if (topicName.isEmpty() && verbal.isEmpty()) return;
+		if (topicName.isEmpty() && verbal.isEmpty()) System.out.println("Error CVI111");
 		int id = 100 + j;
 
 		int y = 40 + (j % maxVert) * 50 + (j/maxVert)*5;
@@ -280,7 +305,7 @@ public class CtvImport {
 	
 	public void addEdge(String fromRef, String toRef) {
 		GraphEdge edge = null;
-		String newEdgeColor = "#c0c0c0";
+		String newEdgeColor = "#d8d8d8";
 		edgesNum++;
 		GraphNode sourceNode = nodes.get(inputID2num.get(fromRef));
 		GraphNode targetNode = nodes.get(inputID2num.get(toRef));
