@@ -133,7 +133,6 @@ public class ImappingExport {
 
 		this.nodes = nodes;
 		this.controler = controler;
-		controler.setWaitCursor();
 		
 		InputStream rdfInputStream = getClass().getResourceAsStream("stub.txt"); 
 		InputStream cdsInputStream = getClass().getResourceAsStream("stub.xml"); 
@@ -404,7 +403,6 @@ public class ImappingExport {
 			zout.putNextEntry(new ZipEntry(RDF_FILENAME));
 			zout.write(outBytes);
 			if (!success) controler.displayPopup("Export failed");
-			controler.setDefaultCursor();
 			zout.close();
 		} catch (IOException e) {
 			System.out.println("Error IE110 " + e);

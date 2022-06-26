@@ -73,8 +73,6 @@ public class DwzExport {
 //
 //		Read stub file
 		
-		controler.setWaitCursor();
-		
 		InputStream cdsInputStream = getClass().getResourceAsStream("dwzstub.xml"); 
 		
 		// Initialize output 
@@ -261,7 +259,6 @@ public class DwzExport {
 			fout.write(cdsOut);
 			
 			if (!success) controler.displayPopup("Export failed");
-			controler.setDefaultCursor();
 			fout.close();
 		} catch (IOException e) {
 			System.out.println("error DE110 " + e);
