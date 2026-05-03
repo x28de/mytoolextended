@@ -1,4 +1,4 @@
-package de.x28hd.tool;
+package de.x28hd.tool.exporters;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
@@ -44,6 +44,12 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
+
+import de.x28hd.tool.PresentationService;
+import de.x28hd.tool.accessories.BranchInfo;
+import de.x28hd.tool.accessories.MyHTMLEditorKit;
+import de.x28hd.tool.core.GraphEdge;
+import de.x28hd.tool.core.GraphNode;
 
 public class ImappingExport {
 	
@@ -114,13 +120,13 @@ public class ImappingExport {
 
 	// Misc
 	String htmlOut = "";
-	GraphPanelControler controler;
+	PresentationService controler;
 	boolean success = false;
 	int nodeNumber = 0;
 	int treeNumber = 0;
 	
 	public ImappingExport(Hashtable<Integer,GraphNode> nodes, Hashtable<Integer,GraphEdge> edges, 
-			String zipFilename, GraphPanelControler controler)  {
+			String zipFilename, PresentationService controler)  {
 
 //		Reads stubs and adds to them, both for RDF and CDS;
 //		For RDF, all is done in a long string;
@@ -267,9 +273,9 @@ public class ImappingExport {
 //		Hashtable<Integer,String> num2rdf = new Hashtable<Integer,String>();
 //		Hashtable<Integer,String> num2cds = new Hashtable<Integer,String>();
 
-		DefaultTreeModel treeModel = controler.getTreeModel();
+		DefaultTreeModel treeModel = controler.getControlerExtras().getTreeModel();
 		if (treeModel != null) {
-			nonTreeEdges = controler.getNonTreeEdges();
+			nonTreeEdges = controler.getControlerExtras().getNonTreeEdges();
 			DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode) treeModel.getRoot();
 			descendTree(treeNode, 1, CDS_INBOX2, inboxItem, "");
 		} else {
@@ -707,13 +713,13 @@ private String filterHTML(String html) {
 	return htmlOut;
 }
 
-private static class MyHTMLEditorKit extends HTMLEditorKit {
-	private static final long serialVersionUID = 7279700400657879527L;
-
-	public Parser getParser() {
-		return super.getParser();
-	}
-}
+//private static class MyHTMLEditorKit extends HTMLEditorKit {
+//	private static final long serialVersionUID = 7279700400657879527L;
+//
+//	public Parser getParser() {
+//		return super.getParser();
+//	}
+//}
 	
 //
 // 	Accessory 

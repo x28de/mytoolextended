@@ -1,4 +1,4 @@
-package de.x28hd.tool;
+package de.x28hd.tool.importers;
 
 import java.awt.Color;
 import java.awt.Point;
@@ -16,6 +16,11 @@ import javax.xml.transform.TransformerConfigurationException;
 import org.sqlite.SQLiteConfig;
 import org.xml.sax.SAXException;
 
+import de.x28hd.tool.PresentationService;
+import de.x28hd.tool.core.GraphEdge;
+import de.x28hd.tool.core.GraphNode;
+import de.x28hd.tool.exporters.TopicMapStorer;
+
 public class CtvImport {
 	
 	//	Major fields
@@ -32,11 +37,8 @@ public class CtvImport {
         	System.out.println("Error CVI101 " + e);
         } 
     } 
-    String[][] table = {{"ReferenceAuthor", "ReferenceCategory", "ReferenceKeyword",
-    	"KnowledgeItemCategory", "KnowledgeItemKeyword"},
-    	{"Person", "Category", "Keyword", "Category", "Keyword", "Reference", "KnowledgeItem"}};
-    String[][] field = {{"PersonID", "CategoryID", "KeywordID", "CategoryID", "KeywordID"},
-		{"LastName", "Name", "Name", "Name", "Name", "ShortTitle", "CoreStatement"}};
+    String[][] table = {{"entries"}};
+    String[][] field = {{"id", "read_at", "content_html"}};
     
     String[] colors = {"#eeeeee", "#ffbbbb", "#eeeeee", "#ffbbbb", "#eeeeee", "#bbbbff", "#ffff99"};
     
@@ -47,12 +49,12 @@ public class CtvImport {
 	
 	//	Constants
 	int maxVert = 10;
-	GraphPanelControler controler;
+	PresentationService controler;
 	String filename;
 	boolean ctv6 = false;
 
 	
-    public CtvImport(File file, GraphPanelControler controler){ 
+    public CtvImport(File file, PresentationService controler){ 
     	this.controler = controler;
         try {
         	filename = file.getCanonicalPath();
@@ -123,85 +125,85 @@ public class CtvImport {
             	}
             	rs.close(); 
             
-            	//	Add publications and connect them
-            	sqlString = "SELECT QUOTE(" + c + ") as q1, QUOTE(" +
-            		t + ".ReferenceID) as q2 FROM " + t + ";";
-            		//	(All Authors, Categories, Keywords of all Publications)
-            	rs = stmt.executeQuery(sqlString);
-            	while (rs.next()) { 
-            		String multID = rs.getString("q1"); 
-            		if (!inputID2num.containsKey(multID)) continue;
-            		String pubID = rs.getString("q2");
-            		if (!inputID2num.containsKey(pubID)) {
-            			addNode(pubID, 5);
-            		}
-            		addEdge(multID, pubID);
-            	}
-            	rs.close(); 
+//            	//	Add publications and connect them
+//            	sqlString = "SELECT QUOTE(" + c + ") as q1, QUOTE(" +
+//            		t + ".ReferenceID) as q2 FROM " + t + ";";
+//            		//	(All Authors, Categories, Keywords of all Publications)
+//            	rs = stmt.executeQuery(sqlString);
+//            	while (rs.next()) { 
+//            		String multID = rs.getString("q1"); 
+//            		if (!inputID2num.containsKey(multID)) continue;
+//            		String pubID = rs.getString("q2");
+//            		if (!inputID2num.containsKey(pubID)) {
+//            			addNode(pubID, 5);
+//            		}
+//            		addEdge(multID, pubID);
+//            	}
+//            	rs.close(); 
             }
             
-            //	Process publications that are linked
-            Statement stmt2 = connection.createStatement(); 
-            String sqlString2 = "SELECT QUOTE(ActiveEntityID) as q1, QUOTE(PassiveEntityID) as q2 FROM EntityLInk;";
-            if (ctv6) sqlString2 = "SELECT EntityLink.Indication, QUOTE(SourceID) as q1, QUOTE(TargetID) as q2 FROM EntityLInk;";
-        	ResultSet rs2 = stmt2.executeQuery(sqlString2);
-        	while (rs2.next()) { 
-        		if (ctv6 && !rs2.getString("Indication").equals("ReferenceLink")) continue; 
-        		String actID = rs2.getString("q1"); 
-        		if (!inputID2num.containsKey(actID)) {
-        			addNode(actID, 5);
-        		}
-        		String passID = rs2.getString("q2"); 
-        		if (!inputID2num.containsKey(passID)) {
-        			addNode(passID, 5);
-        		}
-        		addEdge(actID, passID);
-        	}
-            rs2.close();
+//            //	Process publications that are linked
+//            Statement stmt2 = connection.createStatement(); 
+//            String sqlString2 = "SELECT QUOTE(ActiveEntityID) as q1, QUOTE(PassiveEntityID) as q2 FROM EntityLInk;";
+//            if (ctv6) sqlString2 = "SELECT EntityLink.Indication, QUOTE(SourceID) as q1, QUOTE(TargetID) as q2 FROM EntityLInk;";
+//        	ResultSet rs2 = stmt2.executeQuery(sqlString2);
+//        	while (rs2.next()) { 
+//        		if (ctv6 && !rs2.getString("Indication").equals("ReferenceLink")) continue; 
+//        		String actID = rs2.getString("q1"); 
+//        		if (!inputID2num.containsKey(actID)) {
+//        			addNode(actID, 5);
+//        		}
+//        		String passID = rs2.getString("q2"); 
+//        		if (!inputID2num.containsKey(passID)) {
+//        			addNode(passID, 5);
+//        		}
+//        		addEdge(actID, passID);
+//        	}
+//            rs2.close();
             
-            //	Process ideas that have categories or keywords
+//            //	Process ideas that have categories or keywords
+//            
+//            for (int w = 3; w < 5; w++) { 
+//            	String t = table[0][w];
+//            	String f = field[0][w];
+//            	String c = t + "." + f;
+//            	String sqlString = 
+//            		"SELECT QUOTE(" + c +
+//            		") as q1, QUOTE(" + t + ".KnowledgeItemID) AS q2 FROM " + t + ";";
+//            		//	(All Categories and Keywords of all Ideas)
+//            	ResultSet rs = stmt.executeQuery(sqlString);
+//            	while (rs.next()) { 
+//            		String multID = rs.getString("q1"); 
+//            		if (!inputID2num.containsKey(multID)) {
+//            			addNode(multID, w);
+//            		}
+//            		String ideaID = rs.getString("q2"); 
+//            		if (!inputID2num.containsKey(ideaID)) {
+//            			addNode(ideaID, 6);
+//            		}
+//            		addEdge(multID, ideaID);
+//            	}
+//            	rs.close(); 
+//            }
             
-            for (int w = 3; w < 5; w++) { 
-            	String t = table[0][w];
-            	String f = field[0][w];
-            	String c = t + "." + f;
-            	String sqlString = 
-            		"SELECT QUOTE(" + c +
-            		") as q1, QUOTE(" + t + ".KnowledgeItemID) AS q2 FROM " + t + ";";
-            		//	(All Categories and Keywords of all Ideas)
-            	ResultSet rs = stmt.executeQuery(sqlString);
-            	while (rs.next()) { 
-            		String multID = rs.getString("q1"); 
-            		if (!inputID2num.containsKey(multID)) {
-            			addNode(multID, w);
-            		}
-            		String ideaID = rs.getString("q2"); 
-            		if (!inputID2num.containsKey(ideaID)) {
-            			addNode(ideaID, 6);
-            		}
-            		addEdge(multID, ideaID);
-            	}
-            	rs.close(); 
-            }
-            
-            //	Process genuine ideas (with a CoreStatement) linking to publications, and all stand-alone ideas 
-            String sqlString = "SELECT ID, QUOTE(ID) as q1, CoreStatement, ReferenceID, QUOTE(ReferenceID) as q2 FROM KnowledgeItem";
-        	ResultSet rs = stmt.executeQuery(sqlString);
-        	while (rs.next()) { 
-        		String coreStmt = rs.getString("CoreStatement");
-        		if (coreStmt == null) continue;	// Don't know how else to exclude the odd items from the demo
-        		String ideaID = rs.getString("q1");
-        		if (!inputID2num.containsKey(ideaID)) {
-        			addNode(ideaID, 6);
-        		}
-        		String rawRefID = rs.getString("ReferenceID");
-        		if (rawRefID == null) continue;
-        		String pubID = rs.getString("q2");
-        		if (!inputID2num.containsKey(pubID)) {
-        			addNode(pubID, 5);
-        		}
-        		addEdge(ideaID, pubID);
-        	}
+//            //	Process genuine ideas (with a CoreStatement) linking to publications, and all stand-alone ideas 
+//            String sqlString = "SELECT ID, QUOTE(ID) as q1, CoreStatement, ReferenceID, QUOTE(ReferenceID) as q2 FROM KnowledgeItem";
+//        	ResultSet rs = stmt.executeQuery(sqlString);
+//        	while (rs.next()) { 
+//        		String coreStmt = rs.getString("CoreStatement");
+//        		if (coreStmt == null) continue;	// Don't know how else to exclude the odd items from the demo
+//        		String ideaID = rs.getString("q1");
+//        		if (!inputID2num.containsKey(ideaID)) {
+//        			addNode(ideaID, 6);
+//        		}
+//        		String rawRefID = rs.getString("ReferenceID");
+//        		if (rawRefID == null) continue;
+//        		String pubID = rs.getString("q2");
+//        		if (!inputID2num.containsKey(pubID)) {
+//        			addNode(pubID, 5);
+//        		}
+//        		addEdge(ideaID, pubID);
+//        	}
             
             connection.close(); 
             

@@ -1,4 +1,4 @@
-package de.x28hd.tool;
+package de.x28hd.tool.exporters;
 
 import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
@@ -35,6 +35,11 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
+import de.x28hd.tool.PresentationService;
+import de.x28hd.tool.accessories.MyHTMLEditorKit;
+import de.x28hd.tool.core.GraphEdge;
+import de.x28hd.tool.core.GraphNode;
+
 public class DwzExport {
 	
 	//  Major fields
@@ -60,12 +65,12 @@ public class DwzExport {
 	private static final String XML_ROOT = "kgif";
 
 	String htmlOut = "";
-	GraphPanelControler controler;
+	PresentationService controler;
 	boolean success = false;
 
 	
 	public DwzExport(Hashtable<Integer,GraphNode> nodes, Hashtable<Integer,GraphEdge> edges, 
-			String zipFilename, GraphPanelControler controler)  {
+			String zipFilename, PresentationService controler)  {
 
 //		Reads stub and adds to it;
 //		For CDS, we create XML Documents: stub, contentDeltas & statementDeltas, and merge them
@@ -365,13 +370,13 @@ private String filterHTML(String html) {
 	return htmlOut;
 }
 
-private static class MyHTMLEditorKit extends HTMLEditorKit {
-	private static final long serialVersionUID = 7279700400657879527L;
-
-	public Parser getParser() {
-		return super.getParser();
-	}
-}
+//private static class MyHTMLEditorKit extends HTMLEditorKit {
+//	private static final long serialVersionUID = 7279700400657879527L;
+//
+//	public Parser getParser() {
+//		return super.getParser();
+//	}
+//}
 	
     
 //
